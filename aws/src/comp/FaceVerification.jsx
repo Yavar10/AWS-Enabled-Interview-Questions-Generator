@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Camera, Upload, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function FaceVerification() {
   const [userId, setUserId] = useState('');
@@ -9,16 +10,16 @@ export default function FaceVerification() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
+  const navigate = useNavigate();
   const API_ENDPOINT = 'https://5rdb5veky8.execute-api.us-east-1.amazonaws.com/dev/verify';
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
       setError(null);
       setResult(null);
-      
-      // Create preview
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -32,21 +33,24 @@ export default function FaceVerification() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        // Remove the data:image/jpeg;base64, prefix
-        const base64String = reader.result.split(',')[1];
-        resolve(base64String);
+        const result = reader.result;
+        if (typeof result === 'string') {
+          const base64String = result.split(',')[1] ?? '';
+          resolve(base64String);
+        } else {
+          reject(new Error('Unable to convert file to base64'));
+        }
       };
       reader.onerror = (error) => reject(error);
     });
   };
 
   const handleSubmit = async () => {
-    
     if (!userId.trim()) {
       setError('Please enter a User ID');
       return;
     }
-    
+
     if (!imageFile) {
       setError('Please select an image');
       return;
@@ -57,10 +61,8 @@ export default function FaceVerification() {
     setResult(null);
 
     try {
-      // Convert image to base64
       const base64Image = await convertToBase64(imageFile);
 
-      // Send request to API
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -80,7 +82,7 @@ export default function FaceVerification() {
 
       setResult(data);
     } catch (err) {
-      setError(err.message || 'An error occurred during verification');
+      setError(err?.message || 'An error occurred during verification');
     } finally {
       setLoading(false);
     }
@@ -106,7 +108,6 @@ export default function FaceVerification() {
         </div>
 
         <div className="space-y-6">
-          {/* User ID Input */}
           <div>
             <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
               User ID
@@ -122,7 +123,6 @@ export default function FaceVerification() {
             />
           </div>
 
-          {/* Image Upload */}
           <div>
             <label htmlFor="imageFile" className="block text-sm font-medium text-gray-700 mb-2">
               Upload Selfie
@@ -148,7 +148,6 @@ export default function FaceVerification() {
             </div>
           </div>
 
-          {/* Image Preview */}
           {imagePreview && (
             <div className="flex justify-center">
               <img
@@ -159,7 +158,6 @@ export default function FaceVerification() {
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             onClick={handleSubmit}
             disabled={loading}
@@ -176,7 +174,6 @@ export default function FaceVerification() {
           </button>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
             <XCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
@@ -187,13 +184,12 @@ export default function FaceVerification() {
           </div>
         )}
 
-        {/* Success Result */}
         {result && (
-          <div className={`mt-6 p-4 rounded-lg border ${
-            result.match 
-              ? 'bg-green-50 border-green-200' 
-              : 'bg-yellow-50 border-yellow-200'
-          }`}>
+          <div
+            className={`mt-6 p-4 rounded-lg border ${
+              result.match ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'
+            }`}
+          >
             <div className="flex items-start">
               {result.match ? (
                 <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
@@ -201,21 +197,18 @@ export default function FaceVerification() {
                 <XCircle className="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
               )}
               <div className="flex-1">
-                <p className={`text-sm font-medium ${
-                  result.match ? 'text-green-800' : 'text-yellow-800'
-                }`}>
+                <p className={`text-sm font-medium ${result.match ? 'text-green-800' : 'text-yellow-800'}`}>
                   {result.match ? 'Match Found!' : 'No Match'}
                 </p>
-                <p className={`text-sm mt-1 ${
-                  result.match ? 'text-green-600' : 'text-yellow-600'
-                }`}>
+                <p className={`text-sm mt-1 ${result.match ? 'text-green-600' : 'text-yellow-600'}`}>
                   Similarity Score: {result.similarity?.toFixed(2)}%
                 </p>
               </div>
             </div>
+
             {result.match ? (
               <button
-                onClick={() => window.location.href = 'https://aws-enabled-interview-questions-gen.vercel.app'}
+                onClick={() => navigate('/interview')}
                 className="mt-3 w-full text-sm py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
               >
                 Continue to Interview
@@ -231,7 +224,6 @@ export default function FaceVerification() {
           </div>
         )}
 
-        {/* API Configuration Notice */}
         <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs text-blue-800">
             <strong>Note:</strong> Update the API_ENDPOINT in the code with your actual AWS API Gateway URL

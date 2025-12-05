@@ -1,12 +1,14 @@
 import React from 'react'
 import InterviewQuestionGenerator from './comp/InterviewQuestionGenerator'
-
+import { Routes,Route } from 'react-router-dom'
 import FaceVerification from './comp/FaceVerification'
 const App = () => {
   return (
     <div>
-      {/* <InterviewQuestionGenerator/> */}
-      <FaceVerification/>
+    <Routes>
+      <Route path="/" element={<FaceVerification />} />
+      <Route path="/interview" element={<InterviewQuestionGenerator />} />
+    </Routes>
     </div>
   )
 }
