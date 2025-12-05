@@ -8,7 +8,7 @@ export default function InterviewQuestionGenerator() {
   const [formData, setFormData] = useState({
     company: '',
     role: '',
-    count: 5
+    count: 4
   });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
